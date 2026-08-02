@@ -13,6 +13,14 @@ body,
 /* mobile-like scrolling for in-app panes */
 * {
     -webkit-overflow-scrolling: touch;
+    user-select: none;
+}
+
+input,
+textarea,
+select,
+button {
+    user-select: text;
 }
 
 /* hide desktop-style scrollbars in scrollable app sections */
@@ -116,6 +124,86 @@ body,
         opacity: 0;
         transform: translate(-50%, -6px) scale(0.95);
     }
+}
+
+.date-wheel {
+    position: relative;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.date-wheel__focus-ring {
+    position: absolute;
+    left: 0.5rem;
+    right: 0.5rem;
+    top: calc(50% - 20px);
+    height: 40px;
+    border-radius: 0.875rem;
+    border: 2px solid rgba(99, 102, 241, 0.75);
+    background: rgba(99, 102, 241, 0.06);
+    box-shadow:
+        inset 0 0 0 1px rgba(99, 102, 241, 0.14),
+        0 0 0 4px rgba(99, 102, 241, 0.08);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.date-wheel__column {
+    flex: 1;
+    min-height: 200px;
+    max-height: 200px;
+    overflow-y: auto;
+    scroll-snap-type: y proximity;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    scrollbar-width: none;
+}
+
+.date-wheel__item {
+    height: 40px;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    line-height: 1;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        color 0.1s ease,
+        transform 0.1s ease,
+        background-color 0.1s ease;
+}
+
+.date-wheel__item--selected {
+    color: #312e81;
+    font-weight: 700;
+    transform: scale(1.04);
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.date-wheel__spacer {
+    height: calc(50% - 20px);
+}
+
+.date-wheel__column {
+    overscroll-behavior: contain;
+}
+
+.date-wheel__mask {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.88),
+        rgba(255, 255, 255, 0) 28%,
+        rgba(255, 255, 255, 0) 72%,
+        rgba(255, 255, 255, 0.88)
+    );
 }
 
 /* safe-area bottom padding for iPhone home indicator */
