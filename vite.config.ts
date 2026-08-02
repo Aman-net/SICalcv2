@@ -4,9 +4,10 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: '/SICalcv2/',
   plugins: [
     react(),
-    tailwindcss(),
+    tailwindcss(),  
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.svg'],
