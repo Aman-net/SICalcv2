@@ -166,6 +166,10 @@ export default function App() {
                 </div>
             </div>
 
+            <div className="shrink-0 px-4 py-1 text-center text-[11px] text-slate-400">
+                Made with ❤️ by Aman
+            </div>
+
             {/* ── Settings Bottom Sheet ── */}
             {showSettings && (
                 <div
@@ -219,6 +223,15 @@ export default function App() {
                         >
                             Save
                         </button>
+                        <p className="text-xs text-slate-400 mt-2">
+                            Feedback? Email Aman at{" "}
+                            <a
+                                href="mailto:amansoni93744@email.com"
+                                className="text-indigo-600 hover:underline"
+                            >
+                                amansoni93744@email.com
+                            </a>
+                        </p>
                     </div>
                 </div>
             )}
