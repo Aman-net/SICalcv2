@@ -3,6 +3,7 @@ import DateWheel from "./DateWheel"
 import LoanRow from "./LoanEntry"
 import { calcSI, fmtINR, buildShareText, today } from "./calc"
 import { saveBatch, type SavedBatch, type SavedLoanEntry } from "./db"
+import { logEvent } from "./analytics"
 
 function makeId() {
     return (
@@ -137,6 +138,12 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                 interest: res.interest,
             },
         ])
+        logEvent("loan_entry_added", {
+            principal: p,
+            rate: r,
+            days: res.days,
+            interest: res.interest,
+        })
         // clear only the fields that change per entry
         setPrincipal("")
         setStartDate("")
@@ -166,6 +173,12 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
         setClosingSharePreview(false)
         try {
             await saveBatch(batch)
+            logEvent("batch_saved", {
+                totalPrincipal,
+                totalInterest,
+                grandTotal,
+                entryCount: entries.length,
+            })
             onBatchSaved()
             setSharePreview({ batch, text: buildShareText(batch) })
         } catch {
@@ -178,6 +191,10 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
         setClosingSharePreview(false)
         const text = sharePreview.text
         setSharePreview(null)
+        logEvent("batch_shared", {
+            entryCount: sharePreview.batch.entries.length,
+            grandTotal: sharePreview.batch.grandTotal,
+        })
         await doShare(text, () => showToast("Copied to clipboard ✓"))
     }
 
@@ -386,11 +403,16 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                     <LoanRow
                         key={entry.id}
                         entry={entry}
-                        onRemove={() =>
+                        onRemove={() => {
                             setEntries((prev) =>
                                 prev.filter((e) => e.id !== entry.id),
                             )
-                        }
+                            logEvent("loan_entry_deleted", {
+                                id: entry.id,
+                                principal: entry.principal,
+                                interest: entry.interest,
+                            })
+                        }}
                     />
                 ))}
             </div>
@@ -448,6 +470,9 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                         >
                             <button
                                 onClick={() => {
+                                    logEvent("entries_cleared", {
+                                        count: entries.length,
+                                    })
                                     setEntries([])
                                     setAcPending(false)
                                 }}

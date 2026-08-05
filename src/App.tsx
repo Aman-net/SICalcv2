@@ -2,6 +2,15 @@ import { useEffect, useState } from "react"
 import BatchWorkspace from "./BatchWorkspace"
 import History from "./History"
 import { getRate, saveRate } from "./db"
+import {
+    initAnalytics,
+    sendPageView,
+    logEvent,
+    trackAppOpen,
+    trackInstallPrompt,
+    trackInstallAccepted,
+    trackAppInstalled,
+} from "./analytics"
 
 type Tab = "calculator" | "history"
 
@@ -29,6 +38,17 @@ export default function App() {
     }, [])
 
     useEffect(() => {
+        initAnalytics()
+        trackAppOpen()
+        sendPageView(tab === "calculator" ? "/calculator" : "/history")
+    }, [])
+
+    useEffect(() => {
+        sendPageView(tab === "calculator" ? "/calculator" : "/history")
+        logEvent("tab_navigation", { tab })
+    }, [tab])
+
+    useEffect(() => {
         const standalone =
             window.matchMedia("(display-mode: standalone)").matches ||
             Boolean(
@@ -38,10 +58,12 @@ export default function App() {
 
         function handleBeforeInstallPrompt(e: Event) {
             e.preventDefault()
+            trackInstallPrompt()
             setInstallPrompt(e as BeforeInstallPromptEvent)
         }
 
         function handleInstalled() {
+            trackAppInstalled()
             setIsInstalled(true)
             setInstallPrompt(null)
             setShowInstallBanner(false)
@@ -74,6 +96,7 @@ export default function App() {
     }
 
     function openSettings() {
+        logEvent("settings_opened")
         setSettingsRate(String(rate))
         setShowSettings(true)
     }
@@ -83,6 +106,7 @@ export default function App() {
         await installPrompt.prompt()
         const { outcome } = await installPrompt.userChoice
         if (outcome === "accepted") {
+            trackInstallAccepted()
             setShowInstallBanner(false)
         }
         setInstallPrompt(null)
