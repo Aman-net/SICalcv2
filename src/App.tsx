@@ -178,7 +178,7 @@ export default function App() {
             {/* ── Content ── */}
             <div className="flex-1 overflow-hidden flex flex-col min-h-0">
                 <div
-                    className={`flex-1 min-h-0 ${tab === "calculator" ? "block" : "hidden"}`}
+                    className={`flex-1 min-h-0 tab-anim ${tab === "calculator" ? "block" : "hidden"}`}
                 >
                     <BatchWorkspace
                         defaultRate={rate}
@@ -186,7 +186,7 @@ export default function App() {
                     />
                 </div>
                 <div
-                    className={`flex-1 min-h-0 ${tab === "history" ? "block" : "hidden"}`}
+                    className={`flex-1 min-h-0 tab-anim ${tab === "history" ? "block" : "hidden"}`}
                 >
                     <History refreshKey={historyKey} />
                 </div>
