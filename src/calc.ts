@@ -92,8 +92,7 @@ export function haptic(pattern: number | number[] = 10) {
     }
 }
 
-const SEP =
-    "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+const SEP = "-".repeat(28)
 
 export function buildShareText(b: SavedBatch): string {
     const dateStr = fmtDateFromTimestamp(b.createdAt)
@@ -105,18 +104,19 @@ export function buildShareText(b: SavedBatch): string {
     ]
     b.entries.forEach((e, i) => {
         lines.push(
-            `*${i + 1}. ${fmtINR(e.principal)} @ ${e.ratePerMonth}%/mo*`,
-            `   ${fmtDate(e.startDate)} \u2192 ${fmtDate(e.endDate)} (${fmtDuration(e.days)} · ${e.days} days)`,
-            `   *Interest:* ${fmtINR(e.interest)}`,
+            `${i + 1}. ${fmtINR(e.principal)} @ ${e.ratePerMonth}%/mo`,
+            `     ${fmtDateShort(e.startDate)} \u2192 ${fmtDateShort(e.endDate)}`,
+            `     Duration:  ${fmtDuration(e.days)} \u00b7 ${e.days} days`,
+            `     Interest:  ${fmtINR(e.interest)}`,
             "",
         )
     })
     lines.push(
         SEP,
-        `*Principal:* ${fmtINR(b.totalPrincipal)}`,
-        `*Interest:* ${fmtINR(b.totalInterest)}`,
+        `Principal     ${fmtINR(b.totalPrincipal)}`,
+        `Interest      ${fmtINR(b.totalInterest)}`,
         SEP,
-        `*TOTAL DUE: ${fmtINR(b.grandTotal)}*`,
+        `*Total due     ${fmtINR(b.grandTotal)}*`,
     )
     return lines.join("\n")
 }
