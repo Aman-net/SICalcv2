@@ -5,6 +5,7 @@ import {
     fmtDateShort,
     fmtDateFromTimestamp,
     buildShareText,
+    fmtDuration,
 } from "./calc"
 
 interface Props {
@@ -219,7 +220,7 @@ function BatchCard({
                                             >
                                                 {minBilled
                                                     ? `${e.days}d→30d`
-                                                    : `${e.days}d`}
+                                                    : fmtDuration(e.days)}
                                             </span>
                                         </div>
                                     </div>
@@ -278,7 +279,7 @@ export default function History({ refreshKey }: Props) {
     }
 
     return (
-        <div className="overflow-y-auto thin-scrollbar px-4 pt-4 pb-24 space-y-3">
+        <div className="h-full overflow-y-auto thin-scrollbar px-4 pt-4 pb-24 space-y-3">
             {batches.map((b) => {
                 const isOpen = expanded === b.id
 

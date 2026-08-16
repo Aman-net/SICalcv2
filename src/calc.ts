@@ -61,6 +61,18 @@ export function fmtDateFromTimestamp(ts: number): string {
     })
 }
 
+// Compact duration on 30-day month / 360-day year basis, e.g. 1500d → "4y 2mo"
+export function fmtDuration(days: number): string {
+    const years = Math.floor(days / 360)
+    const months = Math.floor((days % 360) / 30)
+    const rem = days % 30
+    const parts: string[] = []
+    if (years > 0) parts.push(`${years}y`)
+    if (months > 0) parts.push(`${months}mo`)
+    if (rem > 0) parts.push(`${rem}d`)
+    return parts.length > 0 ? parts.join(" ") : "0d"
+}
+
 export function today(): string {
     return new Date().toISOString().slice(0, 10)
 }
@@ -79,7 +91,7 @@ export function buildShareText(b: SavedBatch): string {
     b.entries.forEach((e, i) => {
         lines.push(
             `${i + 1}. ${fmtINR(e.principal)} @ ${e.ratePerMonth}%/mo`,
-            `   ${fmtDate(e.startDate)} \u2192 ${fmtDate(e.endDate)} (${e.days} days)`,
+            `   ${fmtDate(e.startDate)} \u2192 ${fmtDate(e.endDate)} (${fmtDuration(e.days)} · ${e.days} days)`,
             `   Interest: ${fmtINR(e.interest)}`,
             "",
         )

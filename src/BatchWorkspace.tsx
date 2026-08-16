@@ -243,7 +243,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                                         fromDateRef.current?.focus()
                                     }
                                 }}
-                                className="w-full h-14 pl-9 pr-3 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-indigo-400 text-2xl font-bold text-slate-800 placeholder:text-slate-200 focus:outline-none transition-colors"
+                                className="w-full h-14 pl-9 pr-3 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-indigo-400 text-2xl font-bold text-slate-800 placeholder:text-slate-200 focus:outline-none transition-colors"
                                 autoFocus
                             />
                         </div>
@@ -258,7 +258,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                                 inputMode="decimal"
                                 value={rate}
                                 onChange={(e) => setRate(e.target.value)}
-                                className="w-full h-14 px-2 pb-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-indigo-400 text-2xl font-bold text-slate-800 text-center focus:outline-none transition-colors"
+                                className="w-full h-14 px-2 pb-4 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-indigo-400 text-2xl font-bold text-slate-800 text-center focus:outline-none transition-colors"
                             />
                             <span className="absolute bottom-2.5 left-0 right-0 text-center text-[10px] text-slate-400 font-semibold pointer-events-none">
                                 %/mo

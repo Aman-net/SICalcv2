@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { fmtINR, fmtDateShort } from "./calc"
+import { fmtINR, fmtDateShort, fmtDuration } from "./calc"
 import type { SavedLoanEntry } from "./db"
 
 interface Props {
@@ -117,7 +117,9 @@ export default function LoanRow({ entry, onRemove }: Props) {
                                 : "bg-indigo-50 text-indigo-400"
                         }`}
                     >
-                        {minBilled ? `${entry.days}d→30d` : `${entry.days}d`}
+                        {minBilled
+                            ? `${entry.days}d→30d`
+                            : fmtDuration(entry.days)}
                     </span>
                 </div>
             </div>
