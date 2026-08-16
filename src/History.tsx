@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { getBatches, deleteBatch, saveBatch, type SavedBatch } from "./db"
+import { logEvent } from "./analytics"
 import {
     fmtINR,
     fmtDateShort,
@@ -298,6 +299,10 @@ export default function History({ refreshKey }: Props) {
         const batch = batches.find((b) => b.id === id)
         if (!batch) return
         haptic(20)
+        logEvent("batch_deleted", {
+            entryCount: batch.entries.length,
+            grandTotal: batch.grandTotal,
+        })
         await deleteBatch(id)
         setBatches((prev) => prev.filter((b) => b.id !== id))
         if (expanded === id) setExpanded(null)

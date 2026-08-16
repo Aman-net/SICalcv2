@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import BatchWorkspace from "./BatchWorkspace"
 import History from "./History"
 import { getRate, saveRate } from "./db"
@@ -30,6 +30,7 @@ export default function App() {
         useState<BeforeInstallPromptEvent | null>(null)
     const [isInstalled, setIsInstalled] = useState(false)
     const [showInstallBanner, setShowInstallBanner] = useState(true)
+    const tabRef = useRef<"calculator" | "history" | null>(null)
 
     useEffect(() => {
         getRate().then((r) => {
@@ -41,12 +42,14 @@ export default function App() {
     useEffect(() => {
         initAnalytics()
         trackAppOpen()
-        sendPageView(tab === "calculator" ? "/calculator" : "/history")
     }, [])
 
     useEffect(() => {
         sendPageView(tab === "calculator" ? "/calculator" : "/history")
-        logEvent("tab_navigation", { tab })
+        if (tabRef.current !== null) {
+            logEvent("tab_navigation", { tab })
+        }
+        tabRef.current = tab
     }, [tab])
 
     useEffect(() => {
