@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import BatchWorkspace from "./BatchWorkspace"
 import History from "./History"
 import { getRate, saveRate } from "./db"
+import { haptic } from "./calc"
 import {
     initAnalytics,
     sendPageView,
@@ -87,6 +88,7 @@ export default function App() {
         const r = parseFloat(settingsRate)
         if (isNaN(r) || r <= 0) return
         await saveRate(r)
+        haptic()
         setRate(r)
         setShowSettings(false)
     }

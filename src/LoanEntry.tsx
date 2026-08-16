@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { fmtINR, fmtDateShort, fmtDuration } from "./calc"
+import { fmtINR, fmtDateShort, fmtDuration, haptic } from "./calc"
 import type { SavedLoanEntry } from "./db"
 
 interface Props {
@@ -35,6 +35,7 @@ export default function LoanRow({ entry, onRemove }: Props) {
             cardWidth.current > 0 &&
             Math.abs(dragX) >= cardWidth.current * 0.5
         ) {
+            haptic(20)
             onRemove()
             return
         }

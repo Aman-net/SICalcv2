@@ -32,7 +32,7 @@ export function fmtINR(amount: number): string {
     return new Intl.NumberFormat("en-IN", {
         style: "currency",
         currency: "INR",
-        maximumFractionDigits: 0,
+        maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
     }).format(amount)
 }
 
@@ -74,7 +74,22 @@ export function fmtDuration(days: number): string {
 }
 
 export function today(): string {
-    return new Date().toISOString().slice(0, 10)
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, "0")
+    const day = String(now.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+}
+
+// subtle haptic feedback on success/destructive actions (no-op where unsupported)
+export function haptic(pattern: number | number[] = 10) {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        try {
+            navigator.vibrate(pattern)
+        } catch {
+            /* ignore */
+        }
+    }
 }
 
 const SEP =
@@ -83,25 +98,25 @@ const SEP =
 export function buildShareText(b: SavedBatch): string {
     const dateStr = fmtDateFromTimestamp(b.createdAt)
     const lines: string[] = [
-        `\uD83E\uDDFE Interest summary`,
+        `\uD83E\uDDFE *INTEREST SUMMARY*`,
         `\uD83D\uDCC5 ${dateStr}`,
         SEP,
         "",
     ]
     b.entries.forEach((e, i) => {
         lines.push(
-            `${i + 1}. ${fmtINR(e.principal)} @ ${e.ratePerMonth}%/mo`,
+            `*${i + 1}. ${fmtINR(e.principal)} @ ${e.ratePerMonth}%/mo*`,
             `   ${fmtDate(e.startDate)} \u2192 ${fmtDate(e.endDate)} (${fmtDuration(e.days)} · ${e.days} days)`,
-            `   Interest: ${fmtINR(e.interest)}`,
+            `   *Interest:* ${fmtINR(e.interest)}`,
             "",
         )
     })
     lines.push(
         SEP,
-        `Principal: ${fmtINR(b.totalPrincipal)}`,
-        `Interest: ${fmtINR(b.totalInterest)}`,
+        `*Principal:* ${fmtINR(b.totalPrincipal)}`,
+        `*Interest:* ${fmtINR(b.totalInterest)}`,
         SEP,
-        `Total due: ${fmtINR(b.grandTotal)}`,
+        `*TOTAL DUE: ${fmtINR(b.grandTotal)}*`,
     )
     return lines.join("\n")
 }

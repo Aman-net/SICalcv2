@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react"
-import { getBatches, deleteBatch, type SavedBatch } from "./db"
+import { getBatches, deleteBatch, saveBatch, type SavedBatch } from "./db"
 import {
     fmtINR,
     fmtDateShort,
     fmtDateFromTimestamp,
     buildShareText,
     fmtDuration,
+    haptic,
 } from "./calc"
 
 interface Props {
@@ -37,6 +38,7 @@ async function doShare(text: string, onCopied?: () => void) {
 interface BatchCardProps {
     batch: SavedBatch
     isOpen: boolean
+    index: number
     onToggle: () => void
     onDelete: () => void
     onShare: () => void
@@ -45,6 +47,7 @@ interface BatchCardProps {
 function BatchCard({
     batch,
     isOpen,
+    index,
     onToggle,
     onDelete,
     onShare,
@@ -60,14 +63,14 @@ function BatchCard({
             : 0
     const dateStr = fmtDateFromTimestamp(batch.createdAt)
 
-    function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    function handlePointerDown(e: React.PointerEvent<HTMLElement>) {
         startX.current = e.clientX
         cardWidth.current = e.currentTarget.getBoundingClientRect().width
         didDrag.current = false
         setDragging(true)
     }
 
-    function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    function handlePointerMove(e: React.PointerEvent<HTMLElement>) {
         if (startX.current === null) return
         const dx = e.clientX - startX.current
         if (Math.abs(dx) > 6) didDrag.current = true
@@ -95,7 +98,13 @@ function BatchCard({
     }
 
     return (
-        <div className="relative">
+        <div
+            className="relative"
+            style={{
+                animation: "fadeSlideIn 0.25s ease-out both",
+                animationDelay: `${Math.min(index * 30, 240)}ms`,
+            }}
+        >
             <div className="absolute inset-y-1.5 right-1.5 left-16 rounded-[20px] overflow-hidden pointer-events-none">
                 <div
                     className="h-full w-full bg-gradient-to-l from-red-500 via-rose-500 to-rose-400 flex items-center justify-end px-4 text-white"
@@ -122,15 +131,15 @@ function BatchCard({
                     transform: `translateX(${dragX}px)`,
                     transition: dragging ? "none" : "transform 0.2s ease-out",
                 }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
                 onClickCapture={handleClickCapture}
             >
                 <button
                     className="w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-slate-50 transition-colors"
                     onClick={onToggle}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
                 >
                     <div className="flex-1 min-w-0">
                         <div className="text-base font-semibold text-slate-900 truncate">
@@ -169,7 +178,10 @@ function BatchCard({
                 </button>
 
                 {isOpen && (
-                    <div className="border-t border-slate-100">
+                    <div
+                        className="border-t border-slate-100"
+                        style={{ animation: "fadeSlideIn 0.2s ease-out" }}
+                    >
                         <div className="px-3 py-2 space-y-2">
                             {batch.entries.map((e) => {
                                 const minBilled = e.days < 30
@@ -253,6 +265,8 @@ export default function History({ refreshKey }: Props) {
     const [batches, setBatches] = useState<SavedBatch[]>([])
     const [expanded, setExpanded] = useState<string | null>(null)
     const [toast, setToast] = useState("")
+    const [undoBatch, setUndoBatch] = useState<SavedBatch | null>(null)
+    const undoTimer = useRef<number | null>(null)
 
     function showToast(msg: string) {
         setToast(msg)
@@ -263,51 +277,124 @@ export default function History({ refreshKey }: Props) {
         getBatches().then(setBatches)
     }, [refreshKey])
 
+    useEffect(() => {
+        return () => {
+            if (undoTimer.current) clearTimeout(undoTimer.current)
+        }
+    }, [])
+
     async function handleDelete(id: string) {
+        const batch = batches.find((b) => b.id === id)
+        if (!batch) return
+        haptic(20)
         await deleteBatch(id)
         setBatches((prev) => prev.filter((b) => b.id !== id))
         if (expanded === id) setExpanded(null)
+        setUndoBatch(batch)
+        setToast("Batch deleted")
+        if (undoTimer.current) clearTimeout(undoTimer.current)
+        undoTimer.current = window.setTimeout(() => setUndoBatch(null), 4000)
     }
 
-    if (batches.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-300 gap-3">
-                <span className="text-6xl">📋</span>
-                <p className="text-sm">No saved calculations yet</p>
-            </div>
+    async function handleUndo() {
+        if (!undoBatch) return
+        await saveBatch(undoBatch)
+        haptic()
+        setBatches((prev) =>
+            [...prev, undoBatch].sort((a, b) => b.createdAt - a.createdAt),
         )
+        setUndoBatch(null)
+        setToast("")
+        if (undoTimer.current) clearTimeout(undoTimer.current)
     }
+
+    const groups = batches.reduce<
+        { key: string; label: string; items: SavedBatch[] }[]
+    >((acc, b) => {
+        const d = new Date(b.createdAt)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+        const existing = acc.find((g) => g.key === key)
+        if (existing) {
+            existing.items.push(b)
+        } else {
+            acc.push({
+                key,
+                label: d.toLocaleDateString("en-GB", {
+                    month: "long",
+                    year: "numeric",
+                }),
+                items: [b],
+            })
+        }
+        return acc
+    }, [])
+
+    let cardIndex = 0
 
     return (
-        <div className="h-full overflow-y-auto thin-scrollbar px-4 pt-4 pb-24 space-y-3">
-            {batches.map((b) => {
-                const isOpen = expanded === b.id
+        <div className="h-full overflow-y-auto thin-scrollbar px-4 pt-4 pb-24 space-y-4">
+            {batches.length === 0 ? (
+                <div
+                    className="flex flex-col items-center justify-center py-20 text-slate-300 gap-3"
+                    style={{ animation: "fadeSlideIn 0.3s ease-out" }}
+                >
+                    <span className="text-6xl">📋</span>
+                    <p className="text-sm">No saved calculations yet</p>
+                </div>
+            ) : (
+                groups.map((group) => (
+                    <section key={group.key} className="space-y-3">
+                        <div className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-slate-50 flex items-baseline gap-2">
+                            <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                                {group.label}
+                            </h2>
+                            <span className="text-[10px] font-semibold text-slate-300">
+                                {group.items.length} batch
+                                {group.items.length !== 1 ? "es" : ""}
+                            </span>
+                        </div>
+                        {group.items.map((b) => {
+                            const isOpen = expanded === b.id
 
-                return (
-                    <BatchCard
-                        key={b.id}
-                        batch={b}
-                        isOpen={isOpen}
-                        onToggle={() => setExpanded(isOpen ? null : b.id)}
-                        onDelete={() => handleDelete(b.id)}
-                        onShare={() =>
-                            doShare(buildShareText(b), () =>
-                                showToast("Copied ✓"),
+                            return (
+                                <BatchCard
+                                    key={b.id}
+                                    batch={b}
+                                    isOpen={isOpen}
+                                    index={cardIndex++}
+                                    onToggle={() =>
+                                        setExpanded(isOpen ? null : b.id)
+                                    }
+                                    onDelete={() => handleDelete(b.id)}
+                                    onShare={() =>
+                                        doShare(buildShareText(b), () =>
+                                            showToast("Copied ✓"),
+                                        )
+                                    }
+                                />
                             )
-                        }
-                    />
-                )
-            })}
+                        })}
+                    </section>
+                ))
+            )}
             {/* ── Toast notification ── */}
             {toast && (
                 <div
-                    className="fixed bottom-8 left-1/2 z-50 bg-slate-800/90 backdrop-blur-sm text-white text-xs font-semibold px-5 py-2.5 rounded-full shadow-xl pointer-events-none"
+                    className="fixed bottom-8 left-1/2 z-50 bg-slate-800/90 backdrop-blur-sm text-white text-xs font-semibold px-5 py-2.5 rounded-full shadow-xl pointer-events-auto flex items-center gap-4"
                     style={{
                         animation: "toastIn 0.2s ease-out",
                         transform: "translateX(-50%)",
                     }}
                 >
-                    {toast}
+                    <span>{toast}</span>
+                    {undoBatch && (
+                        <button
+                            onClick={handleUndo}
+                            className="text-emerald-300 font-bold uppercase tracking-wide"
+                        >
+                            Undo
+                        </button>
+                    )}
                 </div>
             )}
         </div>

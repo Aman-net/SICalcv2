@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import DateWheel from "./DateWheel"
 import LoanRow from "./LoanEntry"
-import { calcSI, fmtINR, buildShareText, today } from "./calc"
+import { calcSI, fmtINR, buildShareText, today, haptic } from "./calc"
 import { saveBatch, type SavedBatch, type SavedLoanEntry } from "./db"
 import { logEvent } from "./analytics"
 
@@ -138,6 +138,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                 interest: res.interest,
             },
         ])
+        haptic()
         logEvent("loan_entry_added", {
             principal: p,
             rate: r,
@@ -173,6 +174,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
         setClosingSharePreview(false)
         try {
             await saveBatch(batch)
+            haptic()
             logEvent("batch_saved", {
                 totalPrincipal,
                 totalInterest,
@@ -243,7 +245,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                                         fromDateRef.current?.focus()
                                     }
                                 }}
-                                className="w-full h-14 pl-9 pr-3 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-indigo-400 text-2xl font-bold text-slate-800 placeholder:text-slate-200 focus:outline-none transition-colors"
+                                className="w-full h-14 pl-9 pr-3 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-indigo-400 text-2xl font-bold text-slate-800 placeholder:text-slate-300 focus:outline-none transition-colors"
                                 autoFocus
                             />
                         </div>
@@ -387,7 +389,10 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                     </div>
                 )}
                 {entries.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-14 text-slate-300 gap-2 select-none">
+                    <div
+                        className="flex flex-col items-center justify-center py-14 text-slate-300 gap-2 select-none"
+                        style={{ animation: "fadeSlideIn 0.3s ease-out" }}
+                    >
                         <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl mb-1">
                             🧾
                         </div>
@@ -473,6 +478,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                                     logEvent("entries_cleared", {
                                         count: entries.length,
                                     })
+                                    haptic(20)
                                     setEntries([])
                                     setAcPending(false)
                                 }}
