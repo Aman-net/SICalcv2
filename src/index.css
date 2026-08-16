@@ -222,6 +222,11 @@ button {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
+/* safe-area top padding for notched phones / standalone PWA */
+.pt-safe {
+    padding-top: max(0.625rem, env(safe-area-inset-top));
+}
+
 /* remove number spinner arrows */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
