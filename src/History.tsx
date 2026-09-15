@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { getBatches, deleteBatch, saveBatch, type SavedBatch } from "./db"
+import { getBatches, deleteBatch, saveBatch, type SavedBatch, type SavedLoanEntry } from "./db"
 import { logEvent } from "./analytics"
 import {
     fmtINR,
@@ -49,6 +49,86 @@ interface BatchCardProps {
     onShare: () => void
 }
 
+function ExpandedEntryRow({ e, dateLocale }: { e: SavedLoanEntry; dateLocale: string }) {
+    const { t, lang } = useTranslation()
+    const chipRef = useRef<HTMLSpanElement>(null)
+    const [marqueeDuration, setMarqueeDuration] = useState(0)
+
+    useEffect(() => {
+        const el = chipRef.current
+        if (!el) return
+        const inner = el.firstElementChild as HTMLElement | null
+        if (!inner) return
+        const diff = inner.scrollWidth - el.clientWidth
+        if (diff > 0) {
+            setMarqueeDuration(Math.max(3, inner.scrollWidth / 30))
+        } else {
+            setMarqueeDuration(0)
+        }
+    }, [e.startDate, e.endDate, dateLocale])
+
+    const minBilled = e.days < 30
+
+    return (
+        <div className="bg-slate-50 rounded-xl overflow-hidden">
+            <div className="flex items-center gap-3 px-3 pt-2.5 pb-2">
+                <div className="flex-1 min-w-0">
+                    <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest leading-none mb-0.5">
+                        {t("card.principal")}
+                    </p>
+                    <p className="text-[17px] font-bold text-slate-800 tracking-tight truncate">
+                        {fmtINR(e.principal)}
+                    </p>
+                </div>
+                <div className="shrink-0 text-right">
+                    <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest leading-none mb-0.5">
+                        {t("card.interest")}
+                    </p>
+                    <p className="text-sm font-bold text-indigo-600 leading-none">
+                        {fmtINR(e.interest)}
+                    </p>
+                </div>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 pb-2.5 text-sm text-slate-400">
+                <span className="bg-white text-slate-500 text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-slate-100">
+                    {e.ratePerMonth}{t("form.rateUnit")}
+                </span>
+                <span
+                    ref={chipRef}
+                    className="inline-flex min-w-0 flex-1 items-center rounded-full bg-slate-50 text-sm font-semibold text-slate-600 border border-slate-200/80 overflow-hidden"
+                >
+                    <div
+                        className="flex items-center gap-1.5 px-3 py-1 whitespace-nowrap"
+                        style={marqueeDuration > 0 ? {
+                            animation: `marquee ${marqueeDuration}s linear infinite`,
+                        } : undefined}
+                    >
+                        <span>{fmtDateShort(e.startDate, dateLocale)}</span>
+                        <span className="text-slate-300 shrink-0">→</span>
+                        <span>{fmtDateShort(e.endDate, dateLocale)}</span>
+                    </div>
+                </span>
+                <span
+                    className={`ml-auto shrink-0 text-sm font-semibold px-2.5 py-1 rounded-full ${
+                        minBilled
+                            ? "bg-amber-50 text-amber-500"
+                            : "bg-indigo-50 text-indigo-400"
+                    }`}
+                >
+                    {minBilled
+                        ? `${e.days}d→30d`
+                        : fmtDuration(
+                            e.days,
+                            lang === "hi"
+                                ? { year: "वर्ष", month: "माह", day: "दिन" }
+                                : { year: "y", month: "mo", day: "d" },
+                          )}
+                </span>
+            </div>
+        </div>
+    )
+}
+
 function BatchCard({
     batch,
     isOpen,
@@ -57,7 +137,7 @@ function BatchCard({
     onDelete,
     onShare,
 }: BatchCardProps) {
-    const { t, lang, dateLocale } = useTranslation()
+    const { t, dateLocale } = useTranslation()
     const [dragX, setDragX] = useState(0)
     const [dragging, setDragging] = useState(false)
     const startX = useRef<number | null>(null)
@@ -191,66 +271,13 @@ function BatchCard({
                         style={{ animation: "fadeSlideIn 0.2s ease-out" }}
                     >
                         <div className="px-3 py-2 space-y-2">
-                            {batch.entries.map((e) => {
-                                const minBilled = e.days < 30
-                                return (
-                                    <div
-                                        key={e.id}
-                                        className="bg-slate-50 rounded-xl overflow-hidden"
-                                    >
-                                        <div className="flex items-center gap-3 px-3 pt-2.5 pb-2">
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest leading-none mb-0.5">
-                                                    {t("card.principal")}
-                                                </p>
-                                                <p className="text-[17px] font-bold text-slate-800 tracking-tight truncate">
-                                                    {fmtINR(e.principal)}
-                                                </p>
-                                            </div>
-                                            <div className="shrink-0 text-right">
-                                                <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest leading-none mb-0.5">
-                                                    {t("card.interest")}
-                                                </p>
-                                                <p className="text-sm font-bold text-indigo-600 leading-none">
-                                                    {fmtINR(e.interest)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 px-3 pb-2.5 text-sm text-slate-400">
-                                            <span className="bg-white text-slate-500 text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-slate-100">
-                                                {e.ratePerMonth}{t("form.rateUnit")}
-                                            </span>
-                                            <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-600 border border-slate-200/80">
-                                                <span className="truncate">
-                                                    {fmtDateShort(e.startDate, dateLocale)}
-                                                </span>
-                                                <span className="text-slate-300 shrink-0">
-                                                    →
-                                                </span>
-                                                <span className="truncate">
-                                                    {fmtDateShort(e.endDate, dateLocale)}
-                                                </span>
-                                            </span>
-                                            <span
-                                                className={`ml-auto shrink-0 text-sm font-semibold px-2.5 py-1 rounded-full ${
-                                                    minBilled
-                                                        ? "bg-amber-50 text-amber-500"
-                                                        : "bg-indigo-50 text-indigo-400"
-                                                }`}
-                                            >
-                                                {minBilled
-                                                    ? `${e.days}d→30d`
-                                                    : fmtDuration(
-                                                        e.days,
-                                                        lang === "hi"
-                                                            ? { year: "वर्ष", month: "माह", day: "दिन" }
-                                                            : { year: "y", month: "mo", day: "d" },
-                                                      )}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )
-                            })}
+                            {batch.entries.map((e) => (
+                                <ExpandedEntryRow
+                                    key={e.id}
+                                    e={e}
+                                    dateLocale={dateLocale}
+                                />
+                            ))}
                         </div>
 
                         <div className="px-3 pb-3 flex gap-2">

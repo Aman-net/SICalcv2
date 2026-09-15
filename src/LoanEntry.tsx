@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { fmtINR, fmtDateShort, fmtDuration, haptic } from "./calc"
 import { useTranslation } from "./i18n"
 import type { SavedLoanEntry } from "./db"
@@ -19,6 +19,22 @@ export default function LoanRow({ entry, onRemove }: Props) {
         cardWidth.current > 0
             ? Math.min(Math.abs(dragX) / (cardWidth.current * 0.5), 1)
             : 0
+
+    const chipRef = useRef<HTMLSpanElement>(null)
+    const [marqueeDuration, setMarqueeDuration] = useState(0)
+
+    useEffect(() => {
+        const el = chipRef.current
+        if (!el) return
+        const inner = el.firstElementChild as HTMLElement | null
+        if (!inner) return
+        const diff = inner.scrollWidth - el.clientWidth
+        if (diff > 0) {
+            setMarqueeDuration(Math.max(3, inner.scrollWidth / 30))
+        } else {
+            setMarqueeDuration(0)
+        }
+    }, [entry.startDate, entry.endDate, dateLocale])
 
     function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
         startX.current = e.clientX
@@ -104,14 +120,20 @@ export default function LoanRow({ entry, onRemove }: Props) {
                     <span className="bg-slate-100 text-slate-500 text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0">
                         {entry.ratePerMonth}{t("form.rateUnit")}
                     </span>
-                    <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-600 border border-slate-200/80">
-                        <span className="truncate">
-                            {fmtDateShort(entry.startDate, dateLocale)}
-                        </span>
-                        <span className="text-slate-400 shrink-0">→</span>
-                        <span className="truncate">
-                            {fmtDateShort(entry.endDate, dateLocale)}
-                        </span>
+                    <span
+                        ref={chipRef}
+                        className="inline-flex min-w-0 flex-1 items-center rounded-full bg-slate-50 text-sm font-semibold text-slate-600 border border-slate-200/80 overflow-hidden"
+                    >
+                        <div
+                            className="flex items-center gap-1.5 px-3 py-1 whitespace-nowrap"
+                            style={marqueeDuration > 0 ? {
+                                animation: `marquee ${marqueeDuration}s linear infinite`,
+                            } : undefined}
+                        >
+                            <span>{fmtDateShort(entry.startDate, dateLocale)}</span>
+                            <span className="text-slate-400 shrink-0">→</span>
+                            <span>{fmtDateShort(entry.endDate, dateLocale)}</span>
+                        </div>
                     </span>
                     <span
                         className={`ml-auto shrink-0 text-sm font-semibold px-2.5 py-1 rounded-full ${
