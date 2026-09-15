@@ -3,6 +3,7 @@ import DateWheel from "./DateWheel"
 import LoanRow from "./LoanEntry"
 import { calcSI, fmtINR, buildShareText, today, haptic } from "./calc"
 import { saveBatch, type SavedBatch, type SavedLoanEntry } from "./db"
+import { useTranslation } from "./i18n"
 import { logEvent } from "./analytics"
 
 function makeId() {
@@ -17,7 +18,7 @@ interface Props {
     onBatchSaved: () => void
 }
 
-async function doShare(text: string, onCopied: () => void) {
+async function doShare(text: string, title: string, onCopied: () => void) {
     try {
         await navigator.clipboard.writeText(text)
         onCopied()
@@ -26,7 +27,7 @@ async function doShare(text: string, onCopied: () => void) {
     }
     if (navigator.share) {
         try {
-            await navigator.share({ title: "Interest Receipt", text })
+            await navigator.share({ title, text })
             return
         } catch (err) {
             if (err instanceof DOMException && err.name === "AbortError") return
@@ -40,6 +41,7 @@ async function doShare(text: string, onCopied: () => void) {
 }
 
 export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
+    const { t, lang } = useTranslation()
     const [principal, setPrincipal] = useState("")
     const [startDate, setStartDate] = useState("")
     // rate and endDate persist across entries — user rarely changes them
@@ -82,40 +84,40 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
         const p = parseFloat(principal)
         const r = parseFloat(rate)
         if (!(p > 0)) {
-            setFormError("Enter a principal amount")
+            setFormError(t("errors.enterPrincipal"))
             return
         }
         if (!(r > 0)) {
-            setFormError("Enter a valid rate")
+            setFormError(t("errors.enterRate"))
             return
         }
         if (r > 100) {
-            setFormError("Rate looks too high — check %/mo value")
+            setFormError(t("errors.rateTooHigh"))
             return
         }
         if (!startDate) {
-            setFormError("Select a start date")
+            setFormError(t("errors.selectStartDate"))
             return
         }
         if (!endDate) {
-            setFormError("Select an end date")
+            setFormError(t("errors.selectEndDate"))
             return
         }
         if (
             !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(startDate) ||
             !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(endDate)
         ) {
-            setFormError("Choose valid dates")
+            setFormError(t("errors.invalidDates"))
             return
         }
         const start = new Date(`${startDate}T00:00:00`)
         const end = new Date(`${endDate}T00:00:00`)
         if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-            setFormError("Choose valid dates")
+            setFormError(t("errors.invalidDates"))
             return
         }
         if (start > end) {
-            setFormError("Start date must be before end date")
+            setFormError(t("errors.dateOrder"))
             return
         }
 
@@ -123,7 +125,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
         try {
             res = calcSI(p, r, startDate, endDate)
         } catch {
-            setFormError("Unable to calculate loan details")
+            setFormError(t("errors.calcFailed"))
             return
         }
         setEntries((prev) => [
@@ -182,9 +184,26 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                 entryCount: entries.length,
             })
             onBatchSaved()
-            setSharePreview({ batch, text: buildShareText(batch) })
+            setSharePreview({
+                batch,
+                text: buildShareText(
+                    batch,
+                    {
+                        summary: t("share.summary"),
+                        duration: t("share.duration"),
+                        principal: t("share.principal"),
+                        interest: t("share.interest"),
+                        totalDue: t("share.totalDue"),
+                    },
+                    lang === "hi" ? "hi-IN" : "en-GB",
+                    lang === "hi"
+                        ? { year: "वर्ष", month: "माह", day: "दिन" }
+                        : { year: "y", month: "mo", day: "d" },
+                    lang === "hi" ? "%/माह" : "%/mo",
+                ),
+            })
         } catch {
-            showToast("Unable to save the batch. Please try again.")
+            showToast(t("toast.saveFailed"))
         }
     }
 
@@ -197,7 +216,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
             entryCount: sharePreview.batch.entries.length,
             grandTotal: sharePreview.batch.grandTotal,
         })
-        await doShare(text, () => showToast("Copied to clipboard ✓"))
+        await doShare(text, t("share.title"), () => showToast(t("toast.copied")))
     }
 
     function handleCancelShare() {
@@ -216,7 +235,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                 <div className="flex gap-2.5 mb-2.5">
                     <div className="flex-1 min-w-0">
                         <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">
-                            Principal
+                            {t("form.principal")}
                         </label>
                         <div className="relative">
                             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 font-bold text-lg select-none pointer-events-none">
@@ -225,7 +244,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                             <input
                                 type="text"
                                 inputMode="decimal"
-                                placeholder="Enter Amount"
+                                placeholder={t("form.enterAmount")}
                                 value={
                                     principal
                                         ? Number(principal).toLocaleString(
@@ -252,7 +271,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                     </div>
                     <div className="w-[88px] shrink-0">
                         <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">
-                            Rate
+                            {t("form.rate")}
                         </label>
                         <div className="relative">
                             <input
@@ -263,7 +282,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                                 className="w-full h-14 px-2 pb-4 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-indigo-400 text-2xl font-bold text-slate-800 text-center focus:outline-none transition-colors"
                             />
                             <span className="absolute bottom-2.5 left-0 right-0 text-center text-[10px] text-slate-400 font-semibold pointer-events-none">
-                                %/mo
+                                {t("form.rateUnit")}
                             </span>
                         </div>
                     </div>
@@ -276,10 +295,10 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                             className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5 flex items-center gap-1.5"
                             style={{ color: startDate ? "#818cf8" : "#6366f1" }}
                         >
-                            From
+                            {t("form.from")}
                             {!startDate && (
                                 <span className="text-[9px] font-bold bg-indigo-100 text-indigo-500 px-1.5 py-0.5 rounded-full leading-none">
-                                    enter first
+                                    {t("form.enterFirst")}
                                 </span>
                             )}
                         </label>
@@ -302,10 +321,10 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                     </div>
                     <div>
                         <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 flex items-center gap-1.5">
-                            To
+                            {t("form.to")}
                             {endDate === today() && (
                                 <span className="text-[9px] font-bold bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-full leading-none">
-                                    today
+                                    {t("form.today")}
                                 </span>
                             )}
                         </label>
@@ -333,15 +352,15 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                             <div className="flex items-center justify-between mb-3">
                                 <p className="text-sm font-semibold text-slate-700">
                                     {activeDateField === "from"
-                                        ? "Select start date"
-                                        : "Select end date"}
+                                        ? t("date.selectStart")
+                                        : t("date.selectEnd")}
                                 </p>
                                 <button
                                     type="button"
                                     onClick={() => setActiveDateField(null)}
                                     className="text-sm text-slate-500 hover:text-slate-700"
                                 >
-                                    Done
+                                    {t("date.done")}
                                 </button>
                             </div>
                             <DateWheel
@@ -372,7 +391,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                         onClick={handleAdd}
                         className="shrink-0 h-11 px-7 rounded-2xl bg-gradient-to-r from-indigo-500 to-indigo-700 text-white font-bold text-sm active:scale-95 transition-transform shadow-md shadow-indigo-200"
                     >
-                        + Add
+                        {t("form.add")}
                     </button>
                 </div>
             </div>
@@ -385,7 +404,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                         style={{ animation: "fadeSlideIn 0.2s ease-out" }}
                     >
                         <span>←</span>
-                        <span>Swipe left to delete</span>
+                        <span>{t("hint.swipeDelete")}</span>
                     </div>
                 )}
                 {entries.length === 0 && (
@@ -397,10 +416,10 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                             🧾
                         </div>
                         <p className="text-sm font-medium text-slate-400">
-                            No loans yet
+                            {t("empty.noLoans")}
                         </p>
                         <p className="text-xs text-slate-300">
-                            Fill the form above and tap + Add
+                            {t("empty.noLoansHint")}
                         </p>
                     </div>
                 )}
@@ -427,7 +446,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                 <div className="shrink-0 px-4 py-3 bg-white border-t-2 border-slate-100">
                     <div className="flex justify-between items-center mb-1.5">
                         <span className="text-xs text-slate-600 font-semibold">
-                            Principal
+                            {t("totals.principal")}
                         </span>
                         <span className="text-sm font-semibold text-slate-800">
                             {fmtINR(totalPrincipal)}
@@ -435,7 +454,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                     </div>
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-xs text-slate-600 font-semibold">
-                            + Interest
+                            {t("totals.interest")}
                         </span>
                         <span className="text-base font-bold text-indigo-700">
                             {fmtINR(totalInterest)}
@@ -443,7 +462,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-dashed border-slate-200">
                         <span className="text-sm font-semibold text-slate-700">
-                            Total Due
+                            {t("totals.totalDue")}
                         </span>
                         <span className="text-xl font-black text-emerald-600">
                             {fmtINR(grandTotal)}
@@ -484,13 +503,13 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                                 }}
                                 className="h-12 px-4 rounded-2xl bg-red-500 text-white font-bold text-sm active:scale-90 transition-all"
                             >
-                                Clear all
+                                {t("action.clearAll")}
                             </button>
                             <button
                                 onClick={() => setAcPending(false)}
                                 className="h-12 px-3 rounded-2xl bg-slate-100 text-slate-500 text-sm active:scale-90 transition-all"
                             >
-                                Cancel
+                                {t("action.cancel")}
                             </button>
                         </div>
                     )}
@@ -499,8 +518,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                         disabled={entries.length === 0}
                         className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm disabled:opacity-25 active:scale-95 transition-transform shadow-md shadow-emerald-200 flex items-center justify-center gap-2"
                     >
-                        <span>Save & Share</span>
-                        {/* <span className="text-base">↗</span> */}
+                        <span>{t("action.saveShare")}</span>
                     </button>
                 </div>
             </div>
@@ -518,7 +536,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                     >
                         <div className="px-4 pt-4 pb-3 border-b border-slate-100">
                             <h3 className="text-sm font-bold text-slate-800">
-                                Preview
+                                {t("action.preview")}
                             </h3>
                         </div>
                         <pre className="max-h-[50vh] overflow-y-auto thin-scrollbar px-4 py-3 text-[12px] leading-6 text-slate-600 whitespace-pre-wrap break-words bg-slate-50/80 border border-slate-200 rounded-2xl">
@@ -529,13 +547,13 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                                 onClick={handleCancelShare}
                                 className="flex-1 h-11 rounded-2xl bg-slate-100 text-slate-600 text-sm font-semibold active:scale-95 transition-transform"
                             >
-                                Cancel
+                                {t("action.cancel")}
                             </button>
                             <button
                                 onClick={handleConfirmShare}
                                 className="flex-1 h-11 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold active:scale-95 transition-transform"
                             >
-                                Share
+                                {t("action.share")}
                             </button>
                         </div>
                     </div>

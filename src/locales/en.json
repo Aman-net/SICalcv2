@@ -1,0 +1,86 @@
+{
+  "app.title": "SI Calc",
+  "tabs.calculator": "\uD83E\uDDEE Calculator",
+  "tabs.history": "\uD83D\uDCCB History",
+
+  "form.principal": "Principal",
+  "form.rate": "Rate",
+  "form.from": "From",
+  "form.to": "To",
+  "form.add": "+ Add",
+  "form.enterAmount": "Enter Amount",
+  "form.rateUnit": "%/mo",
+  "form.enterFirst": "enter first",
+  "form.today": "today",
+
+  "date.selectStart": "Select start date",
+  "date.selectEnd": "Select end date",
+  "date.done": "Done",
+  "date.day": "Day",
+  "date.month": "Month",
+  "date.year": "Year",
+
+  "errors.enterPrincipal": "Enter a principal amount",
+  "errors.enterRate": "Enter a valid rate",
+  "errors.rateTooHigh": "Rate looks too high \u2014 check %/mo value",
+  "errors.selectStartDate": "Select a start date",
+  "errors.selectEndDate": "Select an end date",
+  "errors.invalidDates": "Choose valid dates",
+  "errors.dateOrder": "Start date must be before end date",
+  "errors.calcFailed": "Unable to calculate loan details",
+
+  "totals.principal": "Principal",
+  "totals.interest": "+ Interest",
+  "totals.totalDue": "Total Due",
+
+  "card.principal": "Principal",
+  "card.interest": "Interest",
+
+  "action.clearAll": "Clear all",
+  "action.cancel": "Cancel",
+  "action.saveShare": "Save & Share",
+  "action.preview": "Preview",
+  "action.share": "Share",
+  "action.shareAgain": "Share Again",
+  "action.delete": "Delete",
+  "action.undo": "Undo",
+
+  "hint.swipeDelete": "Swipe left to delete",
+  "empty.noLoans": "No loans yet",
+  "empty.noLoansHint": "Fill the form above and tap + Add",
+
+  "toast.copied": "Copied to clipboard \u2713",
+  "toast.batchDeleted": "Batch deleted",
+  "toast.saveFailed": "Unable to save the batch. Please try again.",
+
+  "share.title": "Interest Receipt",
+  "share.summary": "INTEREST SUMMARY",
+  "share.principal": "Principal",
+  "share.interest": "Interest",
+  "share.totalDue": "Total due",
+  "share.duration": "Duration",
+
+  "history.loan": "loan",
+  "history.loans": "loans",
+  "history.batch": "batch",
+  "history.batches": "batches",
+  "history.totalDue": "Total due",
+  "history.interest": "Interest",
+  "history.empty": "No saved calculations yet",
+
+  "settings.title": "Settings",
+  "settings.defaultRate": "Default Interest Rate",
+  "settings.rateUnit": "%/month",
+  "settings.hint": "Pre-fills the rate on every new loan entry",
+  "settings.save": "Save",
+  "settings.feedback": "Feedback? Email Aman at",
+
+  "install.title": "Install SI Calc",
+  "install.desc": "Add it to your home screen for faster offline use.",
+  "install.later": "Later",
+  "install.install": "Install",
+
+  "footer.madeWith": "Made with \u2764\uFE0F by Aman",
+
+  "lang.toggle": "Language"
+}

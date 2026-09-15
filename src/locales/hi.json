@@ -1,0 +1,86 @@
+{
+  "app.title": "SI Calc",
+  "tabs.calculator": "🧮 कैलकुलेटर",
+  "tabs.history": "📋 इतिहास",
+
+  "form.principal": "मुख्य राशि",
+  "form.rate": "ब्याज दर",
+  "form.from": "से",
+  "form.to": "तक",
+  "form.add": "+ जोड़ें",
+  "form.enterAmount": "राशि दर्ज करें",
+  "form.rateUnit": "%/माह",
+  "form.enterFirst": "पहले दर्ज करें",
+  "form.today": "आज",
+
+  "date.selectStart": "शुरू की तारीख चुनें",
+  "date.selectEnd": "समाप्ति की तारीख चुनें",
+  "date.done": "हो गया",
+  "date.day": "दिन",
+  "date.month": "महीना",
+  "date.year": "साल",
+
+  "errors.enterPrincipal": "मुख्य राशि दर्ज करें",
+  "errors.enterRate": "वैध ब्याज दर दर्ज करें",
+  "errors.rateTooHigh": "ब्याज दर बहुत ज़्यादा लगती है — %/माह जांचें",
+  "errors.selectStartDate": "शुरू की तारीख चुनें",
+  "errors.selectEndDate": "समाप्ति की तारीख चुनें",
+  "errors.invalidDates": "वैध तारीखें चुनें",
+  "errors.dateOrder": "शुरू की तारीख समाप्ति से पहले होनी चाहिए",
+  "errors.calcFailed": "लोन विवरण गणना करने में असमर्थ",
+
+  "totals.principal": "मुख्य राशि",
+  "totals.interest": "+ ब्याज",
+  "totals.totalDue": "कुल देय",
+
+  "card.principal": "मुख्य राशि",
+  "card.interest": "ब्याज",
+
+  "action.clearAll": "सब साफ़ करें",
+  "action.cancel": "रद्द करें",
+  "action.saveShare": "सहेजें और साझा करें",
+  "action.preview": "पूर्वावलोकन",
+  "action.share": "साझा करें",
+  "action.shareAgain": "फिर से साझा करें",
+  "action.delete": "हटाएं",
+  "action.undo": "पूर्ववत करें",
+
+  "hint.swipeDelete": "हटाने के लिए बाएं स्वाइप करें",
+  "empty.noLoans": "अभी कोई लोन नहीं",
+  "empty.noLoansHint": "ऊपर फॉर्म भरें और + जोड़ें दबाएं",
+
+  "toast.copied": "क्लिपबोर्ड पर कॉपी हो गया ✓",
+  "toast.batchDeleted": "बैच हटा दिया गया",
+  "toast.saveFailed": "बैच सहेजने में असमर्थ। कृपया पुनः प्रयास करें।",
+
+  "share.title": "ब्याज रसीद",
+  "share.summary": "ब्याज सारांश",
+  "share.principal": "मुख्य राशि",
+  "share.interest": "ब्याज",
+  "share.totalDue": "कुल देय",
+  "share.duration": "अवधि",
+
+  "history.loan": "लोन",
+  "history.loans": "लोन",
+  "history.batch": "बैच",
+  "history.batches": "बैच",
+  "history.totalDue": "कुल देय",
+  "history.interest": "ब्याज",
+  "history.empty": "अभी कोई सहेजी गई गणना नहीं",
+
+  "settings.title": "सेटिंग्स",
+  "settings.defaultRate": "डिफ़ॉल्ट ब्याज दर",
+  "settings.rateUnit": "%/माह",
+  "settings.hint": "हर नए लोन में डिफ़ॉल्ट दर भरता है",
+  "settings.save": "सहेजें",
+  "settings.feedback": "सुझाव? Aman को ईमेल करें",
+
+  "install.title": "SI Calc इंस्टॉल करें",
+  "install.desc": "तेज़ ऑफ़लाइन उपयोग के लिए होम स्क्रीन पर जोड़ें।",
+  "install.later": "बाद में",
+  "install.install": "इंस्टॉल करें",
+
+  "footer.madeWith": "Aman ❤️ से बनाया",
+
+  "lang.toggle": "भाषा"
+}

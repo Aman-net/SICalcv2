@@ -36,41 +36,79 @@ export function fmtINR(amount: number): string {
     }).format(amount)
 }
 
-export function fmtDate(iso: string): string {
-    // force midnight local to avoid timezone-off-by-one on date display
-    return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", {
+const HI_MONTHS_SHORT = ["जन", "फर", "मार", "अप्र", "मई", "जून", "जुल", "अग", "सित", "अक्ट", "नव", "दिस"]
+const HI_MONTHS_LONG = ["जनवरी", "फरवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"]
+
+function pad2(n: number) {
+    return String(n).padStart(2, "0")
+}
+
+export function fmtDate(iso: string, dateLocale = "en-GB"): string {
+    const d = new Date(iso + "T00:00:00")
+    if (dateLocale === "hi-IN") {
+        return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)}`
+    }
+    return d.toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "2-digit",
         year: "2-digit",
     })
 }
 
-export function fmtDateShort(iso: string): string {
-    return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", {
+export function fmtDateShort(iso: string, dateLocale = "en-GB"): string {
+    const d = new Date(iso + "T00:00:00")
+    if (dateLocale === "hi-IN") {
+        return `${pad2(d.getDate())} ${HI_MONTHS_SHORT[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`
+    }
+    return d.toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "short",
         year: "2-digit",
     })
 }
 
-export function fmtDateFromTimestamp(ts: number): string {
-    return new Date(ts).toLocaleDateString("en-GB", {
+export function fmtDateFromTimestamp(ts: number, dateLocale = "en-GB"): string {
+    const d = new Date(ts)
+    if (dateLocale === "hi-IN") {
+        return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)}`
+    }
+    return d.toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "2-digit",
         year: "2-digit",
     })
 }
 
+export function fmtMonthYear(ts: number, dateLocale = "en-GB"): string {
+    const d = new Date(ts)
+    if (dateLocale === "hi-IN") {
+        return `${HI_MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`
+    }
+    return d.toLocaleDateString("en-GB", {
+        month: "long",
+        year: "numeric",
+    })
+}
+
+interface DurationLabels {
+    year: string
+    month: string
+    day: string
+}
+
 // Compact duration on 30-day month / 360-day year basis, e.g. 1500d → "4y 2mo"
-export function fmtDuration(days: number): string {
+export function fmtDuration(
+    days: number,
+    labels: DurationLabels = { year: "y", month: "mo", day: "d" },
+): string {
     const years = Math.floor(days / 360)
     const months = Math.floor((days % 360) / 30)
     const rem = days % 30
     const parts: string[] = []
-    if (years > 0) parts.push(`${years}y`)
-    if (months > 0) parts.push(`${months}mo`)
-    if (rem > 0) parts.push(`${rem}d`)
-    return parts.length > 0 ? parts.join(" ") : "0d"
+    if (years > 0) parts.push(`${years}${labels.year}`)
+    if (months > 0) parts.push(`${months}${labels.month}`)
+    if (rem > 0) parts.push(`${rem}${labels.day}`)
+    return parts.length > 0 ? parts.join(" ") : `0${labels.day}`
 }
 
 export function today(): string {
@@ -94,29 +132,49 @@ export function haptic(pattern: number | number[] = 10) {
 
 const SEP = "-".repeat(28)
 
-export function buildShareText(b: SavedBatch): string {
-    const dateStr = fmtDateFromTimestamp(b.createdAt)
+interface ShareTextLabels {
+    summary: string
+    duration: string
+    principal: string
+    interest: string
+    totalDue: string
+}
+
+export function buildShareText(
+    b: SavedBatch,
+    labels: ShareTextLabels = {
+        summary: "INTEREST SUMMARY",
+        duration: "Duration",
+        principal: "Principal",
+        interest: "Interest",
+        totalDue: "Total due",
+    },
+    dateLocale = "en-GB",
+    durationLabels: DurationLabels = { year: "y", month: "mo", day: "d" },
+    rateUnit = "%/mo",
+): string {
+    const dateStr = fmtDateFromTimestamp(b.createdAt, dateLocale)
     const lines: string[] = [
-        `\uD83E\uDDFE *INTEREST SUMMARY*`,
+        `\uD83E\uDDFE *${labels.summary}*`,
         `\uD83D\uDCC5 ${dateStr}`,
         SEP,
         "",
     ]
     b.entries.forEach((e, i) => {
         lines.push(
-            `${i + 1}. ${fmtINR(e.principal)} @ ${e.ratePerMonth}%/mo`,
-            `     ${fmtDateShort(e.startDate)} \u2192 ${fmtDateShort(e.endDate)}`,
-            `     Duration:  ${fmtDuration(e.days)} \u00b7 ${e.days} days`,
-            `     Interest:  ${fmtINR(e.interest)}`,
+            `${i + 1}. ${fmtINR(e.principal)} @ ${e.ratePerMonth}${rateUnit}`,
+            `     ${fmtDateShort(e.startDate, dateLocale)} \u2192 ${fmtDateShort(e.endDate, dateLocale)}`,
+            `     ${labels.duration}:  ${fmtDuration(e.days, durationLabels)} \u00b7 ${e.days} days`,
+            `     ${labels.interest}:  ${fmtINR(e.interest)}`,
             "",
         )
     })
     lines.push(
         SEP,
-        `Principal     ${fmtINR(b.totalPrincipal)}`,
-        `Interest      ${fmtINR(b.totalInterest)}`,
+        `${labels.principal}     ${fmtINR(b.totalPrincipal)}`,
+        `${labels.interest}      ${fmtINR(b.totalInterest)}`,
         SEP,
-        `*Total due     ${fmtINR(b.grandTotal)}*`,
+        `*${labels.totalDue}     ${fmtINR(b.grandTotal)}*`,
     )
     return lines.join("\n")
 }

@@ -5,10 +5,12 @@ import {
     fmtINR,
     fmtDateShort,
     fmtDateFromTimestamp,
+    fmtMonthYear,
     buildShareText,
     fmtDuration,
     haptic,
 } from "./calc"
+import { useTranslation } from "./i18n"
 
 const SWIPE_HINT_KEY = "sicalc-swipe-hint-seen"
 
@@ -16,7 +18,7 @@ interface Props {
     refreshKey: number
 }
 
-async function doShare(text: string, onCopied?: () => void) {
+async function doShare(text: string, title: string, onCopied?: () => void) {
     try {
         await navigator.clipboard.writeText(text)
         onCopied?.()
@@ -25,7 +27,7 @@ async function doShare(text: string, onCopied?: () => void) {
     }
     if (navigator.share) {
         try {
-            await navigator.share({ title: "Interest Summary", text })
+            await navigator.share({ title, text })
             return
         } catch (err) {
             if (err instanceof DOMException && err.name === "AbortError") return
@@ -55,6 +57,7 @@ function BatchCard({
     onDelete,
     onShare,
 }: BatchCardProps) {
+    const { t, lang, dateLocale } = useTranslation()
     const [dragX, setDragX] = useState(0)
     const [dragging, setDragging] = useState(false)
     const startX = useRef<number | null>(null)
@@ -64,7 +67,7 @@ function BatchCard({
         cardWidth.current > 0
             ? Math.min(Math.abs(dragX) / (cardWidth.current * 0.5), 1)
             : 0
-    const dateStr = fmtDateFromTimestamp(batch.createdAt)
+    const dateStr = fmtDateFromTimestamp(batch.createdAt, dateLocale)
 
     function handlePointerDown(e: React.PointerEvent<HTMLElement>) {
         startX.current = e.clientX
@@ -122,7 +125,7 @@ function BatchCard({
                     >
                         <span className="text-sm leading-none">🗑</span>
                         <span className="text-[10px] font-bold uppercase tracking-[0.18em]">
-                            Delete
+                            {t("action.delete")}
                         </span>
                     </div>
                 </div>
@@ -150,15 +153,17 @@ function BatchCard({
                         </div>
                         <div className="mt-2 sm:mt-1">
                             <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-500 px-2.5 py-0.5 text-[10px] font-semibold">
-                                {batch.entries.length} loan
-                                {batch.entries.length !== 1 ? "s" : ""}
+                                {batch.entries.length}{" "}
+                                {batch.entries.length !== 1
+                                    ? t("history.loans")
+                                    : t("history.loan")}
                             </span>
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                         <div className="text-right min-w-[92px]">
                             <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400 mb-0.5">
-                                Total due
+                                {t("history.totalDue")}
                             </p>
                             <p className="text-base font-bold text-emerald-600 leading-none">
                                 {fmtINR(batch.grandTotal)}
@@ -166,7 +171,7 @@ function BatchCard({
                         </div>
                         <div className="text-right min-w-[76px]">
                             <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400 mb-0.5">
-                                Interest
+                                {t("history.interest")}
                             </p>
                             <p className="text-sm font-semibold text-indigo-600 leading-none">
                                 {fmtINR(batch.totalInterest)}
@@ -196,7 +201,7 @@ function BatchCard({
                                         <div className="flex items-center gap-3 px-3 pt-2.5 pb-2">
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest leading-none mb-0.5">
-                                                    Principal
+                                                    {t("card.principal")}
                                                 </p>
                                                 <p className="text-[17px] font-bold text-slate-800 tracking-tight truncate">
                                                     {fmtINR(e.principal)}
@@ -204,7 +209,7 @@ function BatchCard({
                                             </div>
                                             <div className="shrink-0 text-right">
                                                 <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest leading-none mb-0.5">
-                                                    Interest
+                                                    {t("card.interest")}
                                                 </p>
                                                 <p className="text-sm font-bold text-indigo-600 leading-none">
                                                     {fmtINR(e.interest)}
@@ -213,17 +218,17 @@ function BatchCard({
                                         </div>
                                         <div className="flex items-center gap-1.5 px-3 pb-2.5 text-sm text-slate-400">
                                             <span className="bg-white text-slate-500 text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-slate-100">
-                                                {e.ratePerMonth}%/mo
+                                                {e.ratePerMonth}{t("form.rateUnit")}
                                             </span>
                                             <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-600 border border-slate-200/80">
                                                 <span className="truncate">
-                                                    {fmtDateShort(e.startDate)}
+                                                    {fmtDateShort(e.startDate, dateLocale)}
                                                 </span>
                                                 <span className="text-slate-300 shrink-0">
                                                     →
                                                 </span>
                                                 <span className="truncate">
-                                                    {fmtDateShort(e.endDate)}
+                                                    {fmtDateShort(e.endDate, dateLocale)}
                                                 </span>
                                             </span>
                                             <span
@@ -235,7 +240,12 @@ function BatchCard({
                                             >
                                                 {minBilled
                                                     ? `${e.days}d→30d`
-                                                    : fmtDuration(e.days)}
+                                                    : fmtDuration(
+                                                        e.days,
+                                                        lang === "hi"
+                                                            ? { year: "वर्ष", month: "माह", day: "दिन" }
+                                                            : { year: "y", month: "mo", day: "d" },
+                                                      )}
                                             </span>
                                         </div>
                                     </div>
@@ -248,13 +258,13 @@ function BatchCard({
                                 onClick={onShare}
                                 className="flex-1 h-11 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold active:scale-95 transition-transform shadow-sm shadow-emerald-200"
                             >
-                                Share Again
+                                {t("action.shareAgain")}
                             </button>
                             <button
                                 onClick={onDelete}
                                 className="h-11 px-4 rounded-2xl bg-red-50 text-red-400 text-sm font-semibold active:scale-95 transition-transform"
                             >
-                                Delete
+                                {t("action.delete")}
                             </button>
                         </div>
                     </div>
@@ -265,6 +275,7 @@ function BatchCard({
 }
 
 export default function History({ refreshKey }: Props) {
+    const { t, lang, dateLocale } = useTranslation()
     const [batches, setBatches] = useState<SavedBatch[]>([])
     const [expanded, setExpanded] = useState<string | null>(null)
     const [toast, setToast] = useState("")
@@ -307,7 +318,7 @@ export default function History({ refreshKey }: Props) {
         setBatches((prev) => prev.filter((b) => b.id !== id))
         if (expanded === id) setExpanded(null)
         setUndoBatch(batch)
-        setToast("Batch deleted")
+        setToast(t("toast.batchDeleted"))
         if (undoTimer.current) clearTimeout(undoTimer.current)
         undoTimer.current = window.setTimeout(() => setUndoBatch(null), 4000)
     }
@@ -335,10 +346,7 @@ export default function History({ refreshKey }: Props) {
         } else {
             acc.push({
                 key,
-                label: d.toLocaleDateString("en-GB", {
-                    month: "long",
-                    year: "numeric",
-                }),
+                label: fmtMonthYear(b.createdAt, dateLocale),
                 items: [b],
             })
         }
@@ -355,7 +363,7 @@ export default function History({ refreshKey }: Props) {
                     style={{ animation: "fadeSlideIn 0.3s ease-out" }}
                 >
                     <span className="text-6xl">📋</span>
-                    <p className="text-sm">No saved calculations yet</p>
+                    <p className="text-sm">{t("history.empty")}</p>
                 </div>
             ) : (
                 <>
@@ -366,7 +374,7 @@ export default function History({ refreshKey }: Props) {
                         >
                             <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 text-slate-500 px-3 py-1 text-[11px] font-semibold">
                                 <span>←</span>
-                                <span>Swipe left to delete</span>
+                                <span>{t("hint.swipeDelete")}</span>
                             </div>
                         </div>
                     )}
@@ -377,8 +385,10 @@ export default function History({ refreshKey }: Props) {
                                 {group.label}
                             </h2>
                             <span className="text-[10px] font-semibold text-slate-400">
-                                {group.items.length} batch
-                                {group.items.length !== 1 ? "es" : ""}
+                                {group.items.length}{" "}
+                                {group.items.length !== 1
+                                    ? t("history.batches")
+                                    : t("history.batch")}
                             </span>
                         </div>
                         <div className="space-y-3 pt-3 pb-5">
@@ -396,8 +406,25 @@ export default function History({ refreshKey }: Props) {
                                         }
                                         onDelete={() => handleDelete(b.id)}
                                         onShare={() =>
-                                            doShare(buildShareText(b), () =>
-                                                showToast("Copied ✓"),
+                                            doShare(
+                                                buildShareText(
+                                                    b,
+                                                    {
+                                                        summary: t("share.summary"),
+                                                        duration: t("share.duration"),
+                                                        principal: t("share.principal"),
+                                                        interest: t("share.interest"),
+                                                        totalDue: t("share.totalDue"),
+                                                    },
+                                                    dateLocale,
+                                                    lang === "hi"
+                                                        ? { year: "वर्ष", month: "माह", day: "दिन" }
+                                                        : { year: "y", month: "mo", day: "d" },
+                                                    lang === "hi" ? "%/माह" : "%/mo",
+                                                ),
+                                                t("share.title"),
+                                                () =>
+                                                    showToast(t("toast.copied")),
                                             )
                                         }
                                     />
@@ -423,7 +450,7 @@ export default function History({ refreshKey }: Props) {
                             onClick={handleUndo}
                             className="text-emerald-300 font-bold uppercase tracking-wide"
                         >
-                            Undo
+                            {t("action.undo")}
                         </button>
                     )}
                 </div>

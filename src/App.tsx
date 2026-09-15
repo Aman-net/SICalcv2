@@ -3,6 +3,7 @@ import BatchWorkspace from "./BatchWorkspace"
 import History from "./History"
 import { getRate, saveRate } from "./db"
 import { haptic } from "./calc"
+import { LanguageProvider, useTranslation } from "./i18n"
 import {
     initAnalytics,
     sendPageView,
@@ -20,7 +21,8 @@ interface BeforeInstallPromptEvent extends Event {
     userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>
 }
 
-export default function App() {
+function AppInner() {
+    const { t, lang, setLanguage } = useTranslation()
     const [tab, setTab] = useState<Tab>("calculator")
     const [rate, setRate] = useState(2)
     const [showSettings, setShowSettings] = useState(false)
@@ -87,6 +89,10 @@ export default function App() {
         }
     }, [])
 
+    useEffect(() => {
+        document.documentElement.lang = lang === "hi" ? "hi" : "en"
+    }, [lang])
+
     async function handleSaveSettings() {
         const r = parseFloat(settingsRate)
         if (isNaN(r) || r <= 0) return
@@ -117,6 +123,10 @@ export default function App() {
         setInstallPrompt(null)
     }
 
+    function toggleLang() {
+        setLanguage(lang === "en" ? "hi" : "en")
+    }
+
     return (
         <div className="h-full flex flex-col bg-slate-50 max-w-lg mx-auto relative">
             {/* ── Header ── */}
@@ -131,24 +141,50 @@ export default function App() {
                                 %
                             </div>
                             <h1 className="text-lg font-black tracking-tight leading-none">
-                                SI Calc
+                                {t("app.title")}
                             </h1>
                         </div>
-                        <button
-                            onClick={openSettings}
-                            className="w-9 h-9 flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 active:scale-90 transition-all"
-                            aria-label="Settings"
-                        >
-                            <svg
-                                viewBox="0 0 24 24"
-                                width="18"
-                                height="18"
-                                fill="currentColor"
-                                aria-hidden="true"
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                onClick={toggleLang}
+                                className="flex items-center gap-1.5 h-9 px-2.5 rounded-full bg-white/15 hover:bg-white/25 active:scale-90 transition-all"
+                                aria-label={t("lang.toggle")}
                             >
-                                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.61 3.61 0 0 1 8.4 12c0-1.98 1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
-                            </svg>
-                        </button>
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="16"
+                                    height="16"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    aria-hidden="true"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="2" y1="12" x2="22" y2="12" />
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                </svg>
+                                <span className="text-[11px] font-bold leading-none">
+                                    {lang === "en" ? "हि" : "EN"}
+                                </span>
+                            </button>
+                            <button
+                                onClick={openSettings}
+                                className="w-9 h-9 flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 active:scale-90 transition-all"
+                                aria-label={t("settings.title")}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="18"
+                                    height="18"
+                                    fill="currentColor"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.61 3.61 0 0 1 8.4 12c0-1.98 1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </header>
 
@@ -157,24 +193,23 @@ export default function App() {
                     <div className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3 flex items-center gap-3 shadow-sm shadow-emerald-100/60">
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-slate-800">
-                                Install SI Calc
+                                {t("install.title")}
                             </p>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Add it to your home screen for faster offline
-                                use.
+                                {t("install.desc")}
                             </p>
                         </div>
                         <button
                             onClick={() => setShowInstallBanner(false)}
                             className="h-9 px-3 rounded-xl bg-white/80 text-slate-500 text-xs font-semibold active:scale-95 transition-transform"
                         >
-                            Later
+                            {t("install.later")}
                         </button>
                         <button
                             onClick={handleInstallApp}
                             className="h-9 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold active:scale-95 transition-transform shadow-sm shadow-emerald-200"
                         >
-                            Install
+                            {t("install.install")}
                         </button>
                     </div>
                 </div>
@@ -182,17 +217,17 @@ export default function App() {
 
             {/* ── Tab Bar ── */}
             <div className="shrink-0 bg-white border-b border-slate-100 flex">
-                {(["calculator", "history"] as Tab[]).map((t) => (
+                {(["calculator", "history"] as Tab[]).map((tb) => (
                     <button
-                        key={t}
-                        onClick={() => setTab(t)}
+                        key={tb}
+                        onClick={() => setTab(tb)}
                         className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                            tab === t
+                            tab === tb
                                 ? "text-indigo-600 border-b-2 border-indigo-600"
                                 : "text-slate-400 hover:text-slate-600"
                         }`}
                     >
-                        {t === "calculator" ? "🧮 Calculator" : "📋 History"}
+                        {tb === "calculator" ? t("tabs.calculator") : t("tabs.history")}
                     </button>
                 ))}
             </div>
@@ -215,7 +250,7 @@ export default function App() {
             </div>
 
             <div className="shrink-0 px-4 py-1 text-center text-[11px] text-slate-400">
-                Made with ❤️ by Aman
+                {t("footer.madeWith")}
             </div>
 
             {/* ── Settings Bottom Sheet ── */}
@@ -234,12 +269,12 @@ export default function App() {
                     >
                         <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto" />
                         <h2 className="text-lg font-bold text-slate-800">
-                            Settings
+                            {t("settings.title")}
                         </h2>
 
                         <div>
                             <label className="text-sm font-medium text-slate-600 block mb-2">
-                                Default Interest Rate
+                                {t("settings.defaultRate")}
                             </label>
                             <div className="relative">
                                 <input
@@ -257,11 +292,11 @@ export default function App() {
                                     autoFocus
                                 />
                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">
-                                    %/month
+                                    {t("settings.rateUnit")}
                                 </span>
                             </div>
                             <p className="text-xs text-slate-400 mt-1.5">
-                                Pre-fills the rate on every new loan entry
+                                {t("settings.hint")}
                             </p>
                         </div>
 
@@ -269,10 +304,10 @@ export default function App() {
                             onClick={handleSaveSettings}
                             className="w-full h-12 bg-indigo-600 text-white rounded-2xl font-semibold text-base active:scale-95 transition-transform"
                         >
-                            Save
+                            {t("settings.save")}
                         </button>
                         <p className="text-xs text-slate-400 mt-2">
-                            Feedback? Email Aman at{" "}
+                            {t("settings.feedback")}{" "}
                             <a
                                 href="mailto:amansoni93744@email.com"
                                 className="text-indigo-600 hover:underline"
@@ -284,5 +319,13 @@ export default function App() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function App() {
+    return (
+        <LanguageProvider>
+            <AppInner />
+        </LanguageProvider>
     )
 }

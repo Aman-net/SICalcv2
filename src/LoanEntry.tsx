@@ -1,5 +1,6 @@
 import { useRef, useState } from "react"
 import { fmtINR, fmtDateShort, fmtDuration, haptic } from "./calc"
+import { useTranslation } from "./i18n"
 import type { SavedLoanEntry } from "./db"
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function LoanRow({ entry, onRemove }: Props) {
+    const { t, lang, dateLocale } = useTranslation()
     const minBilled = entry.days < 30
     const [dragX, setDragX] = useState(0)
     const [dragging, setDragging] = useState(false)
@@ -60,7 +62,7 @@ export default function LoanRow({ entry, onRemove }: Props) {
                     >
                         <span className="text-sm leading-none">🗑</span>
                         <span className="text-[10px] font-bold uppercase tracking-[0.18em]">
-                            Delete
+                            {t("action.delete")}
                         </span>
                     </div>
                 </div>
@@ -81,7 +83,7 @@ export default function LoanRow({ entry, onRemove }: Props) {
                 <div className="flex items-center gap-3 px-3.5 pt-3 pb-2">
                     <div className="flex-1 min-w-0">
                         <p className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest leading-none mb-0.5">
-                            Principal
+                            {t("card.principal")}
                         </p>
                         <p className="text-[19px] font-bold text-slate-900 tracking-tight truncate">
                             {fmtINR(entry.principal)}
@@ -89,7 +91,7 @@ export default function LoanRow({ entry, onRemove }: Props) {
                     </div>
                     <div className="shrink-0 text-right min-w-[88px]">
                         <p className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest leading-none mb-1">
-                            Interest
+                            {t("card.interest")}
                         </p>
                         <p className="text-base font-bold text-indigo-700 leading-none">
                             {fmtINR(entry.interest)}
@@ -100,15 +102,15 @@ export default function LoanRow({ entry, onRemove }: Props) {
                 {/* Bottom row: metadata strip */}
                 <div className="flex items-center gap-1.5 px-3.5 pb-3 text-sm text-slate-400">
                     <span className="bg-slate-100 text-slate-500 text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0">
-                        {entry.ratePerMonth}%/mo
+                        {entry.ratePerMonth}{t("form.rateUnit")}
                     </span>
                     <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-600 border border-slate-200/80">
                         <span className="truncate">
-                            {fmtDateShort(entry.startDate)}
+                            {fmtDateShort(entry.startDate, dateLocale)}
                         </span>
                         <span className="text-slate-400 shrink-0">→</span>
                         <span className="truncate">
-                            {fmtDateShort(entry.endDate)}
+                            {fmtDateShort(entry.endDate, dateLocale)}
                         </span>
                     </span>
                     <span
@@ -120,7 +122,12 @@ export default function LoanRow({ entry, onRemove }: Props) {
                     >
                         {minBilled
                             ? `${entry.days}d→30d`
-                            : fmtDuration(entry.days)}
+                            : fmtDuration(
+                                entry.days,
+                                lang === "hi"
+                                    ? { year: "वर्ष", month: "माह", day: "दिन" }
+                                    : { year: "y", month: "mo", day: "d" },
+                              )}
                     </span>
                 </div>
             </div>

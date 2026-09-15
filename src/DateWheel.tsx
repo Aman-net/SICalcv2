@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react"
+import { useTranslation } from "./i18n"
 
 type DateParts = { year: number; month: number; day: number }
 
@@ -8,20 +9,6 @@ type Props = {
     className?: string
 }
 
-const MONTH_NAMES = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-]
 const ITEM_HEIGHT = 40
 
 function pad(value: number) {
@@ -62,6 +49,7 @@ export default forwardRef<HTMLDivElement, Props>(function DateWheel(
     { value, onChange, className },
     ref,
 ) {
+    const { months, t } = useTranslation()
     const parsed = useMemo(
         () => (value ? parseISO(value) : parseISO(todayISO())),
         [value],
@@ -198,7 +186,7 @@ export default forwardRef<HTMLDivElement, Props>(function DateWheel(
                 <div
                     ref={dayRef}
                     role="listbox"
-                    aria-label="Day"
+                    aria-label={t("date.day")}
                     className="date-wheel__column rounded-2xl bg-slate-50 border border-slate-200"
                     onScroll={() => handleScroll("day")}
                     onPointerDown={() => {
@@ -226,7 +214,7 @@ export default forwardRef<HTMLDivElement, Props>(function DateWheel(
                 <div
                     ref={monthRef}
                     role="listbox"
-                    aria-label="Month"
+                    aria-label={t("date.month")}
                     className="date-wheel__column rounded-2xl bg-slate-50 border border-slate-200"
                     onScroll={() => handleScroll("month")}
                     onPointerDown={() => {
@@ -236,7 +224,7 @@ export default forwardRef<HTMLDivElement, Props>(function DateWheel(
                     onTouchEnd={() => handleScrollEnd("month")}
                 >
                     <div className="date-wheel__spacer" />
-                    {MONTH_NAMES.map((name, index) => {
+                    {months.map((name, index) => {
                         const monthValue = index + 1
                         const selectedItem = monthValue === selected.month
                         return (
@@ -254,7 +242,7 @@ export default forwardRef<HTMLDivElement, Props>(function DateWheel(
                 <div
                     ref={yearRef}
                     role="listbox"
-                    aria-label="Year"
+                    aria-label={t("date.year")}
                     className="date-wheel__column rounded-2xl bg-slate-50 border border-slate-200"
                     onScroll={() => handleScroll("year")}
                     onPointerDown={() => {
