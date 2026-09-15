@@ -415,6 +415,7 @@ export default function History({ refreshKey }: Props) {
                                                         principal: t("share.principal"),
                                                         interest: t("share.interest"),
                                                         totalDue: t("share.totalDue"),
+                                                        days: t("share.days"),
                                                     },
                                                     dateLocale,
                                                     lang === "hi"

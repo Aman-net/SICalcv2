@@ -194,6 +194,7 @@ export default function BatchWorkspace({ defaultRate, onBatchSaved }: Props) {
                         principal: t("share.principal"),
                         interest: t("share.interest"),
                         totalDue: t("share.totalDue"),
+                        days: t("share.days"),
                     },
                     lang === "hi" ? "hi-IN" : "en-GB",
                     lang === "hi"

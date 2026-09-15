@@ -138,6 +138,7 @@ interface ShareTextLabels {
     principal: string
     interest: string
     totalDue: string
+    days: string
 }
 
 export function buildShareText(
@@ -148,6 +149,7 @@ export function buildShareText(
         principal: "Principal",
         interest: "Interest",
         totalDue: "Total due",
+        days: "days",
     },
     dateLocale = "en-GB",
     durationLabels: DurationLabels = { year: "y", month: "mo", day: "d" },
@@ -164,7 +166,7 @@ export function buildShareText(
         lines.push(
             `${i + 1}. ${fmtINR(e.principal)} @ ${e.ratePerMonth}${rateUnit}`,
             `     ${fmtDateShort(e.startDate, dateLocale)} \u2192 ${fmtDateShort(e.endDate, dateLocale)}`,
-            `     ${labels.duration}:  ${fmtDuration(e.days, durationLabels)} \u00b7 ${e.days} days`,
+            `     ${labels.duration}:  ${fmtDuration(e.days, durationLabels)} \u00b7 ${e.days} ${labels.days}`,
             `     ${labels.interest}:  ${fmtINR(e.interest)}`,
             "",
         )
