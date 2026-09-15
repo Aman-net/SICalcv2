@@ -83,5 +83,9 @@
 
   "footer.madeWith": "Made with \u2764\uFE0F by Aman",
 
-  "lang.toggle": "Language"
+  "lang.toggle": "Language",
+
+  "tip.title": "New: Hindi Language!",
+  "tip.desc": "Tap the language button in the header to switch between English & Hindi.",
+  "tip.gotIt": "Got it"
 }

@@ -32,6 +32,8 @@ function AppInner() {
         useState<BeforeInstallPromptEvent | null>(null)
     const [isInstalled, setIsInstalled] = useState(false)
     const [showInstallBanner, setShowInstallBanner] = useState(true)
+    const [showLangTip, setShowLangTip] = useState(false)
+    const [closingLangTip, setClosingLangTip] = useState(false)
     const tabRef = useRef<"calculator" | "history" | null>(null)
 
     useEffect(() => {
@@ -92,6 +94,25 @@ function AppInner() {
     useEffect(() => {
         document.documentElement.lang = lang === "hi" ? "hi" : "en"
     }, [lang])
+
+    useEffect(() => {
+        try {
+            const count = parseInt(localStorage.getItem("sicalc-lang-tip-count") || "0", 10)
+            if (count < 3) setShowLangTip(true)
+        } catch { /* ignore */ }
+    }, [])
+
+    function dismissLangTip() {
+        try {
+            const count = parseInt(localStorage.getItem("sicalc-lang-tip-count") || "0", 10)
+            localStorage.setItem("sicalc-lang-tip-count", String(count + 1))
+        } catch { /* ignore */ }
+        setClosingLangTip(true)
+        setTimeout(() => {
+            setShowLangTip(false)
+            setClosingLangTip(false)
+        }, 220)
+    }
 
     async function handleSaveSettings() {
         const r = parseFloat(settingsRate)
@@ -315,6 +336,53 @@ function AppInner() {
                                 amansoni93744@email.com
                             </a>
                         </p>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Language Tip Popup ── */}
+            {showLangTip && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-6"
+                    onClick={dismissLangTip}
+                >
+                    <div
+                        className="w-full max-w-xs bg-white rounded-2xl shadow-2xl px-6 py-7 text-center space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            animation: closingLangTip
+                                ? "slideDownFade 0.22s ease-in forwards"
+                                : "slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1)",
+                        }}
+                    >
+                        <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center mx-auto">
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="28"
+                                height="28"
+                                fill="none"
+                                stroke="#6366f1"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="2" y1="12" x2="22" y2="12" />
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-base font-bold text-slate-800">
+                            {t("tip.title")}
+                        </h3>
+                        <p className="text-sm text-slate-500 leading-relaxed">
+                            {t("tip.desc")}
+                        </p>
+                        <button
+                            onClick={dismissLangTip}
+                            className="w-full h-11 rounded-2xl bg-indigo-600 text-white font-semibold text-sm active:scale-95 transition-transform"
+                        >
+                            {t("tip.gotIt")}
+                        </button>
                     </div>
                 </div>
             )}
